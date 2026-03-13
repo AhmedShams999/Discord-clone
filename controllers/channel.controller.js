@@ -9,7 +9,6 @@ export const sendMessage = async (req, res) => {
     const user = req.user;
     const { content, channelId } = req.body;
     const image = req.files || [];
-    console.log(channelId);
     if (!content && image.length == 0)
       return res.status(400).json({ msg: "Message must have content" });
 
