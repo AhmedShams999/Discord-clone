@@ -6,6 +6,7 @@ import authRoute from "./routes/auth.routes.js";
 import serverRoute from "./routes/server.route.js";
 import channelRoute from "./routes/channel.route.js";
 import userRoute from "./routes/user.route.js";
+import notificationRoute from "./routes/notification.route.js";
 import { ConnectDB } from "./config/DB.js";
 import { createServer } from "http";
 import { Server } from "socket.io";
@@ -54,6 +55,7 @@ app.use("/api/auth", authRoute);
 app.use("/api/server", serverRoute);
 app.use("/api/channel", channelRoute);
 app.use("/api/user", userRoute);
+app.use("/api/notifications", notificationRoute);
 
 io.on("connection", async (socket) => {
   setupSocketHandlers(socket);
