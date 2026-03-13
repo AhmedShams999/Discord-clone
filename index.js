@@ -16,6 +16,7 @@ import { setupSocketHandlers } from "./lib/setupSocketHandlers.js";
 dotenv.config();
 const PORT = process.env.PORT;
 const app = express();
+app.set("trust proxy", 1);
 const allowedOrigins = [
   "http://localhost:4200",
   "https://short-ducks-find.loca.lt", // ✅ phone access over WiFi
