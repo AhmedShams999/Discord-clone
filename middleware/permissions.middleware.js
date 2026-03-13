@@ -4,54 +4,49 @@ import User from "../models/User.model.js"
 
 
 export const hasServerPermission = (permission)=> async (req,res,next)=>{
-  let user = req.user
-  const {serverId} = req.params
-  
+  const { serverId } = req.params;
+  const user = req.user;
+
   try {
-    // Fetch user with roles populated
-    if(!user) return res.status(404).json({msg: "User not found"})
+    if (!user) return res.status(404).json({ msg: "User not found" });
 
-    user = await user.populate({
-      path: 'roles.role',
-      match: {server: serverId},
-    })
+    const server = await Server.findById(serverId).select("owner");
+    if (!server) return res.status(404).json({ msg: "Server not found" });
 
+ 
+    // Owner gets full access
+    if (server.owner.toString() === user._id.toString()) return next();
 
-    user.roles = user.roles
-      .filter(r => r.role)
-      .sort((a, b) => b.role.position - a.role.position);
+    // Populate and clean roles once
+    await user.populate({
+      path: "roles.role",
+      match: { server: serverId },
+    });
 
+    // Pre-compute user's permissions for this server
+    const userServerPermissions = user.roles
+      .filter((r) => r.role)
+      .sort((a, b) => b.role.position - a.role.position)
+      .flatMap((r) => r.role.permissions);
+
+    if (!userServerPermissions.includes(permission)) {
+      return res.status(403).json({ msg: "Insufficient permissions" });
+    }
+
+    // Attach to request for use in route handlers if needed
+    req.userPermissions = userServerPermissions;
     
-    const server = await Server.findById(serverId);
-
-    if(!server) return res.status(404).json({msg: "Server not found"})
-
-    // check if he is the owner to grante full access
-    if(server.owner.toString() == user._id.toString()){
-      return next();
-    }
-
-    // check if any role have the permission
-
-    const hasPermission = user.roles.some(userRole=>
-      userRole.role.permissions.includes(permission)
-    )
-
-    if(!hasPermission){
-      return res.status(403).json({msg: "Insufficient permissions"})
-    }
-
-    next()
-
+    
+    next();
   } catch (error) {
-    console.log("Error in permissions middleware")
-    return res.status(500).json({msg: error.message});
+    console.error("Error in hasServerPermission middleware:", error);
+    return res.status(500).json({ msg: error.message });
   }
 }
 
 export const hasChannelPermission = (permission)=> async (req,res,next)=>{
     const user = req.user
-    const {channelId}= req.params
+    const {channelId}= req.body
   try {
     const channel = await Channel.findById(channelId).populate("server")
 
@@ -106,3 +101,17 @@ export const hasChannelPermission = (permission)=> async (req,res,next)=>{
     return res.status(500).json({msg: error.message});
   }
 }
+
+export const hasChannelPermissionV2 = (channel, userRoleIds, userServerPermissions, permission) => {
+  const relevantPerms = channel.permissions.filter(p =>
+    userRoleIds.includes(p.role.toString())
+  );
+
+  const isDenied = relevantPerms.some(p => p.deny.includes(permission));
+  if (isDenied) return false;
+
+  const isAllowed = relevantPerms.some(p => p.allow.includes(permission));
+  if (isAllowed) return true;
+
+  return userServerPermissions.includes(permission);
+}; 
