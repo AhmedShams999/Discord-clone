@@ -9,8 +9,7 @@ const verifyToken = async (token) => {
 
 export const protectRoutes = async (req, res, next) => {
   try {
-    const token = req.cookies.chat_jwt;
-
+    const token = req.headers.authorization?.split(" ")[1]; // Bearer <token>
     if (!token) {
       return res.status(401).json({ msg: "Unauthorized - No Token Provided" });
     }
@@ -31,17 +30,7 @@ export const protectRoutes = async (req, res, next) => {
 
 export const protectSocket = async (socket, next) => {
   try {
-    const cookies = socket.handshake.headers.cookie;
-
-    if (!cookies) return next(new Error("Unauthorized - No Token Provided"));
-
-    const parsedCookies = Object.fromEntries(
-      cookies
-        .split(";")
-        .map((c) => c.trim().split("=").map(decodeURIComponent)),
-    );
-
-    const token = parsedCookies["chat_jwt"];
+    const token = socket.handshake.auth.token;
 
     if (!token) return next(new Error("Unauthorized - No Token Provided"));
 

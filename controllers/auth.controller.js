@@ -36,15 +36,13 @@ export const signup = async (req, res) => {
       password: hashedPassword,
     });
 
-    generateWebToken(newUser._id, res);
+    const token = generateWebToken(newUser._id, res);
     await newUser.save();
 
     return res.status(201).json({
       msg: "User is signed up",
-      user: {
-        username,
-        email,
-      },
+      token,
+      user: newUser,
     });
   } catch (error) {
     console.log("Error in AuthController");
@@ -56,7 +54,10 @@ export const login = async (req, res) => {
   const { username, password } = req.body;
 
   try {
-    const user = await User.findOne({ username });
+    const user = await User.findOne({ username }).populate(
+      "servers",
+      "_id name icon owner",
+    );
 
     if (!user) return res.status(400).json({ msg: "User is not exsit" });
 
@@ -69,9 +70,9 @@ export const login = async (req, res) => {
     user.status = "online";
     await user.save();
 
-    generateWebToken(user._id, res);
+    const token = generateWebToken(user._id, res);
 
-    return res.status(200).json({ msg: "You loged in", user });
+    return res.status(200).json({ msg: "You loged in", token, user });
   } catch (error) {
     console.log("Error in AuthController");
     return res.status(500).json({ msg: error.message });
@@ -83,11 +84,7 @@ export const logout = async (req, res) => {
     await User.findByIdAndUpdate(req.user._id, {
       status: "offline",
     });
-    res.clearCookie("chat_jwt", {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-    });
+
     return res.status(200).json({ msg: "You loged out" });
   } catch (error) {
     console.log("Error in AuthController");

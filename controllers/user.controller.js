@@ -262,3 +262,19 @@ export const getUserInvites = async (req, res) => {
     return res.status(500).json({ msg: error.message });
   }
 };
+export const getUserServers = async (req, res) => {
+  const userId = req.user._id;
+
+  try {
+    const user = await User.findById(userId)
+      .populate("servers", "_id name icon owner")
+      .lean();
+
+    return res
+      .status(200)
+      .json({ msg: "user Servers found", servers: user.servers });
+  } catch (error) {
+    console.error("Error in getUserInvites:", error);
+    return res.status(500).json({ msg: error.message });
+  }
+};
