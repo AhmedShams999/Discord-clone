@@ -80,10 +80,14 @@ export const login = async (req, res) => {
 
 export const logout = async (req, res) => {
   try {
-     await User.findByIdAndUpdate(req.user._id, {
-      status: 'offline',
+    await User.findByIdAndUpdate(req.user._id, {
+      status: "offline",
     });
-    res.cookie("chat_jwt", "", { maxAge: 0 });
+    res.clearCookie("chat_jwt", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+    });
     return res.status(200).json({ msg: "You loged out" });
   } catch (error) {
     console.log("Error in AuthController");
@@ -97,7 +101,6 @@ export const GetMe = async (req, res) => {
       .populate("servers", "_id name icon owner")
       .select("-password");
 
-    
     return res.status(200).json({
       _id: user._id,
       username: user.username,
