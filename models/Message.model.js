@@ -24,6 +24,10 @@ const messageSchema = new mongoose.Schema(
           type: String,
           required: true,
         },
+        type: {
+          type: String,
+          required: true,
+        },
       },
     ], // File references
     isPinned: { type: Boolean, default: false }, // Pinned messages

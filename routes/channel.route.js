@@ -14,18 +14,20 @@ const storage = multer.memoryStorage();
 
 const upload = multer({
   storage,
-  limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit (adjust as needed)
-  },
   fileFilter: (req, file, cb) => {
-    // Allow audio and image files
-    if (
-      file.mimetype.startsWith("audio/") ||
-      file.mimetype.startsWith("image/")
-    ) {
+    const isVideo = file.mimetype.startsWith("video/");
+    const isAudioOrImage =
+      file.mimetype.startsWith("audio/") || file.mimetype.startsWith("image/");
+
+    if (isVideo) {
+      // multer doesn't support per-file size limits natively
+      // so we store the type and check in the controller
+      file.isVideo = true;
+      cb(null, true);
+    } else if (isAudioOrImage) {
       cb(null, true);
     } else {
-      cb(new Error("Only audio and image files are allowed!"), false);
+      cb(new Error("Only audio, image and video files are allowed!"), false);
     }
   },
 });

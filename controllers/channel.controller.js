@@ -16,12 +16,29 @@ export const sendMessage = async (req, res) => {
 
     for (const el of image) {
       try {
+        const maxSize = el.mimetype.startsWith("video/")
+          ? 20 * 1024 * 1024
+          : 10 * 1024 * 1024;
+        if (el.size > maxSize) {
+          return res.status(400).json({
+            msg: `${el.originalname} exceeds the size limit`,
+          });
+        }
         let ImageUrl;
+
         if (el.mimetype.startsWith("audio/")) {
           ImageUrl = await uploadImages(
             el,
             res,
             "voices",
+            "video",
+            el.originalname,
+          );
+        } else if (el.mimetype.startsWith("video/")) {
+          ImageUrl = await uploadImages(
+            el,
+            res,
+            "videos",
             "video",
             el.originalname,
           );
@@ -38,6 +55,7 @@ export const sendMessage = async (req, res) => {
         attachments.push({
           url: ImageUrl,
           filename: el.originalname,
+          type: el.mimetype,
         });
       } catch (error) {
         console.log(`Failed to upload ${el.originalname}:`, error);
