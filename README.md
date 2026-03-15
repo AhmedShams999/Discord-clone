@@ -185,9 +185,3 @@ Deployed on **Render** (free tier).
 - Auto-deploys on push to `main`
 - Environment variables set in Render dashboard
 - WebSockets fully supported
-
----
-
-## 📄 License
-
-MIT
