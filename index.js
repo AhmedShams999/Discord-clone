@@ -51,6 +51,9 @@ app.use("/uploads", express.static("uploads"));
 app.use(express.json());
 app.use(cookieParser());
 
+app.get("/", (req, res) => {
+  res.status(200).json({ status: "ok" });
+});
 app.use("/api/auth", authRoute);
 app.use("/api/server", serverRoute);
 app.use("/api/channel", channelRoute);
